@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src",
-    "test": "node --test src/hooks/useDashboardData.test.ts",
+    "test": "node --test src/hooks/useDashboardData.test.ts src/hooks/useOpsStream.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

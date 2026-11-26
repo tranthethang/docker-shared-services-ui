@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ServiceDTO, Telemetry } from "../api/types.ts";
+import type { ServiceAction, ServiceDTO, Telemetry } from "../api/types.ts";
 import { t } from "../i18n/messages.ts";
 import { ServiceCard } from "./ServiceCard.tsx";
 
@@ -11,6 +11,10 @@ export interface ServiceGroupProps {
   telemetry: Telemetry | null;
   selectedServiceName: string | null;
   onSelectService: (name: string) => void;
+  checkedServices?: ReadonlySet<string>;
+  onToggleChecked?: (name: string) => void;
+  opsBusy?: boolean;
+  onAction?: (serviceName: string, action: ServiceAction) => void;
 }
 
 export function ServiceGroup({
@@ -21,6 +25,10 @@ export function ServiceGroup({
   telemetry,
   selectedServiceName,
   onSelectService,
+  checkedServices,
+  onToggleChecked,
+  opsBusy = false,
+  onAction,
 }: ServiceGroupProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -61,6 +69,10 @@ export function ServiceGroup({
               telemetry={telemetry}
               selected={selectedServiceName === svc.name}
               onSelect={onSelectService}
+              checked={checkedServices ? checkedServices.has(svc.name) : false}
+              onToggleChecked={onToggleChecked}
+              opsBusy={opsBusy}
+              onAction={onAction}
             />
           ))}
         </div>

@@ -1,11 +1,16 @@
-import type { ServiceDTO, Telemetry } from "../api/types.ts";
+import type { ServiceAction, ServiceDTO, Telemetry } from "../api/types.ts";
 import { formatBytes, formatPercent, t, type MessageKey } from "../i18n/messages.ts";
+import { ServiceActions } from "./ServiceActions.tsx";
 
 export interface ServiceCardProps {
   service: ServiceDTO;
   telemetry: Telemetry | null;
   selected: boolean;
   onSelect: (name: string) => void;
+  checked?: boolean;
+  onToggleChecked?: (name: string) => void;
+  opsBusy?: boolean;
+  onAction?: (serviceName: string, action: ServiceAction) => void;
 }
 
 const STATE_LABEL_KEYS: Record<string, MessageKey> = {
@@ -44,27 +49,54 @@ function getServiceResources(
   return { cpuPct, memBytes, hasStats };
 }
 
-export function ServiceCard({ service, telemetry, selected, onSelect }: ServiceCardProps) {
+export function ServiceCard({
+  service,
+  telemetry,
+  selected,
+  onSelect,
+  checked = false,
+  onToggleChecked,
+  opsBusy = false,
+  onAction,
+}: ServiceCardProps) {
   const stateKey = STATE_LABEL_KEYS[service.state] ?? "stateAbsent";
   const healthKey = HEALTH_LABEL_KEYS[service.health] ?? "healthDash";
   const { cpuPct, memBytes, hasStats } = getServiceResources(service, telemetry);
   const showHealth = service.health !== "-" && service.health !== "none";
+  const lockReason = service.lockedReason || t("serviceLockedFallback");
 
   return (
     <article
       className={selected ? "service-card service-card--selected" : "service-card"}
     >
       <div className="service-card-top">
-        <button
-          type="button"
-          className="service-card-trigger"
-          onClick={() => onSelect(service.name)}
-          aria-label={t("inspectService", { name: service.name })}
-        >
-          <span className="service-card-name">{service.name}</span>
-        </button>
+        <div className="service-card-title-wrap">
+          {onToggleChecked && (
+            <input
+              type="checkbox"
+              className="service-batch-checkbox"
+              checked={checked}
+              disabled={opsBusy}
+              aria-label={t("selectServiceLabel", { name: service.name })}
+              onChange={() => onToggleChecked(service.name)}
+            />
+          )}
+          <button
+            type="button"
+            className="service-card-trigger"
+            onClick={() => onSelect(service.name)}
+            aria-label={t("inspectService", { name: service.name })}
+          >
+            <span className="service-card-name">{service.name}</span>
+          </button>
+        </div>
 
         <div className="service-badges">
+          {service.locked && (
+            <span className="locked-pill" title={lockReason}>
+              {t("serviceLockedBadge")}
+            </span>
+          )}
           <span className={`status-pill status-pill--${service.state}`}>
             {t(stateKey)}
           </span>
@@ -110,6 +142,15 @@ export function ServiceCard({ service, telemetry, selected, onSelect }: ServiceC
           </div>
         )}
       </div>
+
+      {onAction && (
+        <ServiceActions
+          service={service}
+          opsBusy={opsBusy}
+          onAction={onAction}
+          compact
+        />
+      )}
     </article>
   );
 }

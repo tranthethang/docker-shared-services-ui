@@ -26,6 +26,44 @@ export interface ServiceDTO {
   containerCount: number;
   runningCount: number;
   containers: ContainerInfo[];
+  locked?: boolean;
+  lockedReason?: string;
+}
+
+export type ServiceAction = "up" | "stop" | "down" | "restart";
+
+export type OpsJobStatus = "running" | "succeeded" | "failed";
+
+export interface OpsJob {
+  id: string;
+  kind: string;
+  service?: string;
+  action: string;
+  up?: string[];
+  down?: string[];
+  status: OpsJobStatus;
+  message?: string;
+  startedAt: string;
+  finishedAt?: string;
+}
+
+export interface OpsStatusSnapshot {
+  busy: boolean;
+  current?: OpsJob;
+  lines: string[];
+  history: OpsJob[];
+}
+
+export interface OpsEvent {
+  type: "status" | "line" | "done";
+  jobId: string;
+  line?: string;
+  job?: OpsJob;
+}
+
+export interface BatchDiff {
+  up: string[];
+  down: string[];
 }
 
 export interface ServicesResponse {
