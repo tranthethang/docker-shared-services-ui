@@ -1,0 +1,10 @@
+version: 2
+
+secret:
+  ignored_paths:
+    - "**/*_test.go"
+  ignored_matches:
+    - name: "Garage UI default auth placeholder"
+      match: "N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+    - name: "Known placeholder encryption key"
+      match: "your-encryption-key-32-chars-min"
