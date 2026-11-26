@@ -2,6 +2,8 @@
 
 Use this local web dashboard to view and manage your `docker-shared-services` stack.
 
+![Docker Shared Services UI dashboard](screenhost.png)
+
 ## What you can do
 
 - Check service status, health checks, CPU, memory, and disk usage.
