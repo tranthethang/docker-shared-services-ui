@@ -17,7 +17,10 @@ importers:
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.1.0
-        version: 4.3.5(vite@6.4.6(jiti@2.7.0)(lightningcss@1.33.0))
+        version: 4.3.5(vite@6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0))
+      '@types/node':
+        specifier: ^26.6.7
+        version: 26.6.7
       '@types/react':
         specifier: ^19.1.0
         version: 19.3.1
@@ -26,7 +29,7 @@ importers:
         version: 19.3.0(@types/react@19.3.1)
       '@vitejs/plugin-react':
         specifier: ^4.4.0
-        version: 4.7.0(vite@6.4.6(jiti@2.7.0)(lightningcss@1.33.0))
+        version: 4.7.0(vite@6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0))
       oxlint:
         specifier: ^0.16.0
         version: 0.16.12
@@ -38,7 +41,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^6.3.0
-        version: 6.4.6(jiti@2.7.0)(lightningcss@1.33.0)
+        version: 6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0)
 
 packages:
 
@@ -595,6 +598,9 @@ packages:
   '@types/estree@1.0.10':
     resolution: {integrity: sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==}
 
+  '@types/node@26.6.7':
+    resolution: {integrity: sha512-tovuRfrUILu6v46bMG+BgXxMvsqPBx2WO2as8Rpln+JTff1dbexMtAM4KFTejmL0axsnSWViCW7MecUQpLuBRA==}
+
   '@types/react-dom@19.3.0':
     resolution: {integrity: sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==}
     peerDependencies:
@@ -847,6 +853,9 @@ packages:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  undici-types@8.9.0:
+    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
   update-browserslist-db@1.4.0:
     resolution: {integrity: sha512-WPJuOnjI9FWDct4fB+ej4Mz8opLaw5CDcZ2t44tFZ0vIQVYWzBhWR3mkixuUj/A7+vY4V9+ApOZ2YYLwdgq46w==}
@@ -1273,12 +1282,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.5
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.5
 
-  '@tailwindcss/vite@4.3.5(vite@6.4.6(jiti@2.7.0)(lightningcss@1.33.0))':
+  '@tailwindcss/vite@4.3.5(vite@6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0))':
     dependencies:
       '@tailwindcss/node': 4.3.5
       '@tailwindcss/oxide': 4.3.5
       tailwindcss: 4.3.5
-      vite: 6.4.6(jiti@2.7.0)(lightningcss@1.33.0)
+      vite: 6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0)
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -1303,6 +1312,10 @@ snapshots:
 
   '@types/estree@1.0.10': {}
 
+  '@types/node@26.6.7':
+    dependencies:
+      undici-types: 8.9.0
+
   '@types/react-dom@19.3.0(@types/react@19.3.1)':
     dependencies:
       '@types/react': 19.3.1
@@ -1311,7 +1324,7 @@ snapshots:
     dependencies:
       csstype: 3.2.4
 
-  '@vitejs/plugin-react@4.7.0(vite@6.4.6(jiti@2.7.0)(lightningcss@1.33.0))':
+  '@vitejs/plugin-react@4.7.0(vite@6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0))':
     dependencies:
       '@babel/core': 7.29.13
       '@babel/plugin-transform-react-jsx-self': 7.29.7(@babel/core@7.29.13)
@@ -1319,7 +1332,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 6.4.6(jiti@2.7.0)(lightningcss@1.33.0)
+      vite: 6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -1544,13 +1557,15 @@ snapshots:
 
   typescript@5.9.3: {}
 
+  undici-types@8.9.0: {}
+
   update-browserslist-db@1.4.0(browserslist@4.29.6):
     dependencies:
       browserslist: 4.29.6
       escalade: 3.2.0
       picocolors: 1.1.1
 
-  vite@6.4.6(jiti@2.7.0)(lightningcss@1.33.0):
+  vite@6.4.6(@types/node@26.6.7)(jiti@2.7.0)(lightningcss@1.33.0):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.7)
@@ -1559,6 +1574,7 @@ snapshots:
       rollup: 4.68.8
       tinyglobby: 0.2.17
     optionalDependencies:
+      '@types/node': 26.6.7
       fsevents: 2.3.3
       jiti: 2.7.0
       lightningcss: 1.33.0
