@@ -1,145 +1,151 @@
 # Docker Shared Services UI
 
-Local web dashboard for managing a `docker-shared-services` stack. Built as a single Go binary with an embedded React, TypeScript, and Tailwind CSS frontend (`go:embed`), bound to `127.0.0.1:8787` by default.
+Use this local web dashboard to view and manage your `docker-shared-services` stack.
 
-## Features
+## What you can do
 
-- **Service catalog & live telemetry**: Inspect service state, health checks, containers, CPU/memory usage, and Docker disk breakdown.
-- **Lifecycle & batch operations**: Start, stop, restart, or tear down individual services or apply batch selections with live streaming console output.
-- **Built-in & custom presets**: Apply built-in stack presets or save, edit, and delete custom presets in `localStorage`.
-- **Environment & maintenance tools**: Check shared Docker networks, merge missing `.env` keys from `.env.example`, validate Compose configs, export standalone packages, and prune unused resources.
-- **Theme & keyboard shortcuts**: Switch between `System`, `Light`, and `Dark` themes, and navigate with `/`, `r`, `p`, `?`, and `Esc`.
+- Check service status, health checks, CPU, memory, and disk usage.
+- Start, stop, restart, or remove services and watch live output.
+- Apply built-in presets, or save, edit, and delete custom presets.
+- Check shared networks, add missing `.env` keys, and validate Compose files.
+- Export packages and clean up unused resources.
+- Switch between **System**, **Light**, and **Dark** themes.
+- Move around fast with keyboard shortcuts.
 
-## Prerequisites
+## Before you start
 
-- **Go** 1.27+
-- **pnpm** (with Node.js)
-- **Docker** daemon running locally (with Docker Compose v2)
-- **macOS** (`launchctl`, `plutil`) if installing the background `launchd` service
+- Install Go 1.27 or newer.
+- Install Node.js and `pnpm`.
+- Start Docker with Docker Compose v2 on your machine.
+- Use macOS (`launchctl` and `plutil`) if you want a background service.
 
-## Quick Start
+## Run on your machine
 
-Build the single self-contained binary (`./bin/dashboard`):
+1. Build the app:
 
 ```sh
 make build
 ```
 
-Run the dashboard against your `docker-shared-services` repository:
+2. Start the dashboard with the path to your `docker-shared-services` folder:
 
 ```sh
 ./bin/dashboard --repo /path/to/docker-shared-services
 ```
 
-On startup, the dashboard automatically opens `http://127.0.0.1:8787` in your default browser unless `--no-open` is passed.
+3. Wait for your browser to open `http://127.0.0.1:8787`. Add `--no-open` if you do not want the browser to open.
 
-## Development Mode
+## Run with Docker Compose
 
-Run the Go API server (`--no-open`) and the Vite dev server concurrently:
-
-```sh
-DSS_REPO_PATH=/path/to/docker-shared-services make dev
-```
-
-## CLI Flags & Environment Variables
-
-| Flag | Environment Variable | Default | Description |
-| --- | --- | --- | --- |
-| `--repo <path>` | `DSS_REPO_PATH` | *(required)* | Path to the `docker-shared-services` repository. |
-| `--addr <host:port>` | — | `127.0.0.1:8787` | HTTP listen address. |
-| `--no-open` | — | `false` | Do not open the browser automatically on startup. |
-| `--version` | — | `false` | Print build version, commit SHA, and build date, then exit. |
-
-## macOS `launchd` Background Service
-
-Install the dashboard as a macOS LaunchAgent (`com.tranthethang.dss-ui`) that starts at login (`RunAtLoad`) and stays running (`KeepAlive`) with `--no-open`:
-
-```sh
-DSS_REPO_PATH=/path/to/docker-shared-services make install-service
-```
-
-Or invoke the installer script directly:
-
-```sh
-make build
-./scripts/launchd/install.sh --repo /path/to/docker-shared-services [--addr 127.0.0.1:8787]
-```
-
-This installs:
-- Binary: `~/.local/bin/dss-ui`
-- Plist: `~/Library/LaunchAgents/com.tranthethang.dss-ui.plist`
-- Logs: `~/Library/Logs/dss-ui.log`
-
-To stop and remove the LaunchAgent:
-
-```sh
-make uninstall-service
-# Or also remove ~/.local/bin/dss-ui:
-./scripts/launchd/uninstall.sh --remove-bin
-```
-
-## Docker Compose (`console.sandbox.localhost`)
-
-Run the dashboard as a Docker Compose service behind Traefik and Caddy:
-
-1. Create `.env` from `.env.example` and set `DSS_REPO_PATH` to your local `docker-shared-services` checkout:
+1. Copy the example settings file:
 
 ```sh
 cp .env.example .env
 ```
 
-2. Ensure `docker-shared-services` (`traefik` on the external `traefik_proxy` network) and `docker-shared-services-proxy` (`caddy`) are running.
-
-3. Cross-compile the Linux binary, build the image, and start the container:
+2. Open `.env` and set `DSS_REPO_PATH` to your local `docker-shared-services` folder.
+3. Make sure `docker-shared-services` (`traefik` on `traefik_proxy`) and `docker-shared-services-proxy` (`caddy`) are running.
+4. Build and start the service:
 
 ```sh
 make docker-up
 ```
 
-4. Open `https://console.sandbox.localhost` (or `https://console.${DOMAIN}` if `DOMAIN` is customized in `.env`).
+5. Open `https://console.sandbox.localhost` in your browser. If you changed `DOMAIN` in `.env`, open `https://console.${DOMAIN}` instead.
 
-Optional `.env` variables:
+### Optional `.env` settings
 
-- `DSS_REPO_PATH` *(required)*: Absolute host path to `docker-shared-services` (mounted at the identical path inside the container).
-- `DOMAIN` *(default: `sandbox.localhost`)*: Base domain for the Traefik router rule (`console.${DOMAIN}`).
-- `SANDBOX_NAME` *(optional, empty by default)*: Prefix for the container name (`${SANDBOX_NAME}-console`) and external `traefik_proxy` network (`${SANDBOX_NAME}_traefik_proxy`); leave empty when `docker-shared-services` uses `traefik_proxy`.
-- `AUTH_MIDDLEWARE` *(optional)*: Traefik middleware name (for example `basic-auth@file` or `forward-auth@file`).
-- `RESTART_POLICY` *(default: `unless-stopped`)*: Container restart policy.
-- `CONSOLE_CPUS_LIMIT` *(default: `0.50`)* and `CONSOLE_MEMORY_LIMIT` *(default: `128M`)*: Container resource limits.
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `DOMAIN` | `sandbox.localhost` | Sets the host rule (`console.${DOMAIN}`). |
+| `SANDBOX_NAME` | Empty | Adds a prefix to the service name and `traefik_proxy` network. |
+| `AUTH_MIDDLEWARE` | Empty | Sets a Traefik auth rule such as `basic-auth@file` or `forward-auth@file`. |
+| `RESTART_POLICY` | `unless-stopped` | Sets when the service restarts. |
+| `CONSOLE_CPUS_LIMIT` | `0.50` | Limits CPU usage for the service. |
+| `CONSOLE_MEMORY_LIMIT` | `128M` | Limits memory usage for the service. |
 
-## Keyboard Shortcuts
+## Run in the background on macOS
 
-| Key | Action |
+1. Build and install the background service (`com.tranthethang.dss-ui`):
+
+```sh
+DSS_REPO_PATH=/path/to/docker-shared-services make install-service
+```
+
+You can also run the installer script directly after `make build`:
+
+```sh
+./scripts/launchd/install.sh --repo /path/to/docker-shared-services
+```
+
+Installed files:
+
+- App: `~/.local/bin/dss-ui`
+- Service file: `~/Library/LaunchAgents/com.tranthethang.dss-ui.plist`
+- Output: `~/Library/Logs/dss-ui.log`
+
+2. To stop and remove the background service, run:
+
+```sh
+make uninstall-service
+```
+
+Add `--remove-bin` to `./scripts/launchd/uninstall.sh` if you also want to delete `~/.local/bin/dss-ui`.
+
+## Run in development mode
+
+Start the Go app and the Vite dev app together:
+
+```sh
+DSS_REPO_PATH=/path/to/docker-shared-services make dev
+```
+
+## Startup flags
+
+| Flag | Environment variable | Default | What it does |
+| --- | --- | --- | --- |
+| `--repo <path>` | `DSS_REPO_PATH` | Required | Sets the path to your `docker-shared-services` folder. |
+| `--addr <host:port>` | None | `127.0.0.1:8787` | Sets the local web address. |
+| `--no-open` | None | `false` | Stops the app from opening your browser at startup. |
+| `--version` | None | `false` | Prints the version, git hash, and build date, then exits. |
+
+## Keyboard shortcuts
+
+Shortcuts do not run while you type inside an input box.
+
+| Key | What it does |
 | --- | --- |
-| `/` | Focus service search |
-| `r` | Refresh services and telemetry |
-| `p` | Open service presets modal |
-| `?` | Show or hide keyboard shortcuts help |
-| `Esc` | Close the active modal or drawer |
+| `/` | Focuses the service search box. |
+| `r` | Refreshes services and stats. |
+| `p` | Opens the presets window. |
+| `?` | Shows or hides the keyboard shortcuts help. |
+| `Esc` | Closes the open window or panel. |
 
-Shortcuts are ignored while typing inside `<input>`, `<textarea>`, `<select>`, or `contenteditable` elements.
+## Common Make commands
 
-## Make Targets
+| Command | What it does |
+| --- | --- |
+| `make build-web` | Builds the web files into `web/dist`. |
+| `make build` | Builds the web files and compiles `./bin/dashboard`. |
+| `make build-linux` | Builds the web files and compiles `./bin/dashboard-linux` for Linux. |
+| `make docker-build` | Builds `./bin/dashboard-linux` and the Docker image. |
+| `make docker-up` | Builds the image and starts the `console` service. |
+| `make docker-down` | Stops and removes the `console` service. |
+| `make dev` | Starts the Go app (`--no-open`) and Vite dev app. |
+| `make format` | Formats Go files with `gofmt`. |
+| `make format-check` | Checks Go formatting with `gofmt -l`. |
+| `make lint` | Runs `golangci-lint run`. |
+| `make test` | Runs `go test -race ./...`. |
+| `make check` | Runs formatting, lint, tests, and web build checks. |
+| `make install-service` | Installs the macOS background service. |
+| `make uninstall-service` | Removes the macOS background service. |
+| `make hooks` | Installs git hooks with `prek` or `pre-commit`. |
 
-- `make build-web`: Build frontend assets into `web/dist`.
-- `make build`: Build frontend assets and compile `./bin/dashboard` with `-ldflags` version metadata.
-- `make build-linux`: Build frontend assets and cross-compile a static Linux ELF binary (`./bin/dashboard-linux`).
-- `make docker-build`: Build `./bin/dashboard-linux` and build the Docker image via `docker compose build`.
-- `make docker-up`: Build the image and start the `console` service in detached mode (`docker compose up -d`).
-- `make docker-down`: Stop and remove the `console` service (`docker compose down`).
-- `make dev`: Run Go server (`--no-open`) and Vite dev server concurrently.
-- `make format`: Format Go files with `gofmt`.
-- `make format-check`: Verify Go formatting with `gofmt -l`.
-- `make lint`: Run `golangci-lint run`.
-- `make test`: Run `go test -race ./...`.
-- `make check`: Run `format-check`, `lint`, `test`, plus `pnpm --dir web lint`, `typecheck`, and `build`.
-- `make install-service`: Build and install the macOS `launchd` user agent.
-- `make uninstall-service`: Unload and remove the macOS `launchd` user agent.
-- `make hooks`: Install git hooks via `prek` or `pre-commit`.
+## If something goes wrong
 
-## Troubleshooting
-
-- **`repository path is required`**: Pass `--repo /path/to/docker-shared-services` or export `DSS_REPO_PATH`.
-- **`Docker daemon is unreachable`**: Ensure Docker Desktop (or the Docker daemon) is running and accessible to your user.
-- **Port `8787` already in use**: Pass a different localhost port via `--addr 127.0.0.1:8788`.
-- **`launchd` service not starting**: Inspect `~/Library/Logs/dss-ui.log` and verify `plutil -lint ~/Library/LaunchAgents/com.tranthethang.dss-ui.plist`.
+| You see | What to do |
+| --- | --- |
+| `repository path is required` | Pass `--repo /path/to/docker-shared-services` or set `DSS_REPO_PATH`. |
+| `Docker daemon is unreachable` | Start Docker Desktop or the Docker daemon, then try again. |
+| Port `8787` is already in use | Pass another local port with `--addr 127.0.0.1:8788`. |
+| Background service does not start on macOS | Check `~/Library/Logs/dss-ui.log` and run `plutil -lint ~/Library/LaunchAgents/com.tranthethang.dss-ui.plist`. |
