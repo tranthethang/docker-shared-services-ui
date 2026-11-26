@@ -18,17 +18,18 @@ const (
 
 // Config holds configuration for the dashboard HTTP server.
 type Config struct {
-	Addr        string
-	StaticFS    fs.FS
-	RegisterAPI func(mux *http.ServeMux)
-	RegisterOps func(mux *http.ServeMux)
+	Addr          string
+	StaticFS      fs.FS
+	RegisterAPI   func(mux *http.ServeMux)
+	RegisterOps   func(mux *http.ServeMux)
+	RegisterAdmin func(mux *http.ServeMux)
 }
 
 // New creates an *http.Server configured with the dashboard routes and timeouts.
 func New(cfg Config) *http.Server {
 	return &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           NewHandlerWithAPIs(cfg.StaticFS, cfg.RegisterAPI, cfg.RegisterOps),
+		Handler:           NewHandlerWithAPIs(cfg.StaticFS, cfg.RegisterAPI, cfg.RegisterOps, cfg.RegisterAdmin),
 		ReadHeaderTimeout: defaultReadHeaderTimeout,
 	}
 }

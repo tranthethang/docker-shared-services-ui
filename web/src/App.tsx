@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { EnvStatusResponse } from "./api/admin.ts";
+import { fetchEnvStatus } from "./api/admin.ts";
 import { fetchPresets } from "./api/client.ts";
 import {
   computeBatchDiff,
@@ -8,11 +10,14 @@ import {
 import type { Preset, ServiceAction, ServiceDTO } from "./api/types.ts";
 import { BatchBar } from "./components/BatchBar.tsx";
 import { ConfirmApplyModal } from "./components/ConfirmApplyModal.tsx";
+import { EnvSetupView } from "./components/EnvSetupView.tsx";
 import { ErrorBanner } from "./components/ErrorBanner.tsx";
 import { FilterBar } from "./components/FilterBar.tsx";
 import { Header } from "./components/Header.tsx";
 import { LogViewer } from "./components/LogViewer.tsx";
+import { MaintenancePanel } from "./components/MaintenancePanel.tsx";
 import { OpsConsole } from "./components/OpsConsole.tsx";
+import { PackageWizard } from "./components/PackageWizard.tsx";
 import { PresetsModal } from "./components/PresetsModal.tsx";
 import { ServiceDrawer } from "./components/ServiceDrawer.tsx";
 import { ServiceGroup } from "./components/ServiceGroup.tsx";
@@ -24,6 +29,8 @@ import {
 } from "./hooks/useDashboardData.ts";
 import { useOpsStream } from "./hooks/useOpsStream.ts";
 import { t } from "./i18n/messages.ts";
+
+type AppTab = "services" | "env" | "exporter" | "maintenance";
 
 function activeServiceNames(services: readonly ServiceDTO[]): Set<string> {
   const names = new Set<string>();
@@ -49,6 +56,11 @@ export function App() {
     refresh,
   } = useDashboardData();
 
+  const [activeTab, setActiveTab] = useState<AppTab>("services");
+  const [envStatus, setEnvStatus] = useState<EnvStatusResponse | null>(null);
+  const [envLoading, setEnvLoading] = useState(false);
+  const [envError, setEnvError] = useState<string | null>(null);
+
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [activeOnly, setActiveOnly] = useState(false);
@@ -66,14 +78,34 @@ export function App() {
   const [presetsError, setPresetsError] = useState<string | null>(null);
   const [opsError, setOpsError] = useState<string | null>(null);
 
+  const loadEnvStatus = useCallback(async () => {
+    setEnvLoading(true);
+    setEnvError(null);
+    try {
+      const next = await fetchEnvStatus();
+      setEnvStatus(next);
+    } catch (err: unknown) {
+      setEnvError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setEnvLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadEnvStatus();
+  }, [loadEnvStatus]);
+
   const handleJobDone = useCallback(
     (job: { kind: string }) => {
       if (job.kind === "apply") {
         syncSelectionAfterApplyRef.current = true;
       }
+      if (job.kind === "setup" || job.kind === "validate") {
+        void loadEnvStatus();
+      }
       void refresh();
     },
-    [refresh],
+    [loadEnvStatus, refresh],
   );
 
   const ops = useOpsStream({ onJobDone: handleJobDone });
@@ -206,6 +238,30 @@ export function App() {
           onRefresh={() => void refresh()}
         />
 
+        <nav className="app-nav" aria-label={t("navTabServices")}>
+          {(
+            [
+              ["services", "navTabServices"],
+              ["env", "navTabEnvSetup"],
+              ["exporter", "navTabPackageExporter"],
+              ["maintenance", "navTabMaintenance"],
+            ] as const
+          ).map(([tabKey, labelKey]) => (
+            <button
+              key={tabKey}
+              type="button"
+              className={
+                activeTab === tabKey
+                  ? "app-nav-tab app-nav-tab--active"
+                  : "app-nav-tab"
+              }
+              onClick={() => setActiveTab(tabKey)}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
+        </nav>
+
         {error && (
           <ErrorBanner
             error={error}
@@ -230,71 +286,117 @@ export function App() {
           </section>
         )}
 
-        <TelemetryBar
-          telemetry={telemetry}
-          cpuHistory={cpuHistory}
-          loading={loading}
-        />
+        {activeTab === "env" && (
+          <EnvSetupView
+            status={envStatus}
+            loading={envLoading}
+            error={envError}
+            opsBusy={ops.busy}
+            onRefresh={() => void loadEnvStatus()}
+            onJobStarted={(job) => {
+              markJobStarted(job);
+              setConsoleExpanded(true);
+            }}
+            onError={setOpsError}
+          />
+        )}
 
-        <FilterBar
-          query={query}
-          onQueryChange={setQuery}
-          category={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          categories={categories}
-          activeOnly={activeOnly}
-          onActiveOnlyChange={setActiveOnly}
-          onClear={handleClearFilters}
-          hasActiveFilters={hasActiveFilters}
-        />
+        {activeTab === "exporter" && (
+          <PackageWizard
+            availableServices={
+              envStatus?.availableServices ?? services.map((s) => s.name)
+            }
+            defaultServices={envStatus?.defaultExportServices ?? []}
+            onError={setOpsError}
+          />
+        )}
 
-        <BatchBar
-          selectedCount={checkedServices.size}
-          diff={batchDiff}
-          opsBusy={ops.busy}
-          onOpenPresets={() => void handleOpenPresets()}
-          onReset={handleResetSelection}
-          onApply={() => setConfirmApplyOpen(true)}
-        />
+        {activeTab === "maintenance" && (
+          <MaintenancePanel
+            stackName={envStatus?.stackName ?? (info?.stackName || "default")}
+            telemetry={telemetry}
+            opsBusy={ops.busy}
+            onJobStarted={(job) => {
+              markJobStarted(job);
+              setConsoleExpanded(true);
+            }}
+            onError={setOpsError}
+          />
+        )}
 
-        {loading && services.length === 0 ? (
-          <section className="empty-panel" aria-live="polite">
-            <p className="empty-panel-text">{t("loadingDashboard")}</p>
-          </section>
-        ) : groups.length === 0 ? (
-          <section className="empty-panel" aria-live="polite">
-            <p className="empty-panel-text">
-              {services.length === 0 ? t("noServicesInStack") : t("noMatchingServices")}
-            </p>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={handleClearFilters}
-              >
-                {t("clearFiltersAction")}
-              </button>
+        {activeTab === "services" && (
+          <>
+            <TelemetryBar
+              telemetry={telemetry}
+              cpuHistory={cpuHistory}
+              loading={loading}
+            />
+
+            <FilterBar
+              query={query}
+              onQueryChange={setQuery}
+              category={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+              categories={categories}
+              activeOnly={activeOnly}
+              onActiveOnlyChange={setActiveOnly}
+              onClear={handleClearFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
+
+            <BatchBar
+              selectedCount={checkedServices.size}
+              diff={batchDiff}
+              opsBusy={ops.busy}
+              onOpenPresets={() => void handleOpenPresets()}
+              onReset={handleResetSelection}
+              onApply={() => setConfirmApplyOpen(true)}
+            />
+
+            {loading && services.length === 0 ? (
+              <section className="empty-panel" aria-live="polite">
+                <p className="empty-panel-text">{t("loadingDashboard")}</p>
+              </section>
+            ) : groups.length === 0 ? (
+              <section className="empty-panel" aria-live="polite">
+                <p className="empty-panel-text">
+                  {services.length === 0
+                    ? t("noServicesInStack")
+                    : t("noMatchingServices")}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={handleClearFilters}
+                  >
+                    {t("clearFiltersAction")}
+                  </button>
+                )}
+              </section>
+            ) : (
+              <div className="service-groups">
+                {groups.map((group) => (
+                  <ServiceGroup
+                    key={group.category}
+                    category={group.category}
+                    services={group.services}
+                    runningCount={group.runningCount}
+                    totalCount={group.totalCount}
+                    telemetry={telemetry}
+                    selectedServiceName={selectedServiceName}
+                    onSelectService={setSelectedServiceName}
+                    checkedServices={checkedServices}
+                    onToggleChecked={handleToggleChecked}
+                    opsBusy={ops.busy}
+                    onAction={(name, action) =>
+                      void handleServiceAction(name, action)
+                    }
+                  />
+                ))}
+              </div>
             )}
-          </section>
-        ) : (
-          <div className="service-groups">
-            {groups.map((group) => (
-              <ServiceGroup
-                key={group.category}
-                category={group.category}
-                services={group.services}
-                runningCount={group.runningCount}
-                totalCount={group.totalCount}
-                telemetry={telemetry}
-                selectedServiceName={selectedServiceName}
-                onSelectService={setSelectedServiceName}
-                checkedServices={checkedServices}
-                onToggleChecked={handleToggleChecked}
-                opsBusy={ops.busy}
-                onAction={(name, action) => void handleServiceAction(name, action)}
-              />
-            ))}
-          </div>
+          </>
         )}
       </main>
 

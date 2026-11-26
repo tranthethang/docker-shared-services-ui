@@ -797,6 +797,131 @@ body {
 
 /* Lifecycle controls, Batch Apply, Modals, Ops Console, and Log Viewer */
 
+/* Admin tabs, Env & Setup, Maintenance, and Package Exporter */
+.app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-rule);
+  padding-bottom: 0.75rem;
+}
+
+.app-nav-tab {
+  height: 40px;
+  padding: 0 1rem;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--color-rule);
+  background-color: var(--light);
+  color: var(--color-ink-2);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.app-nav-tab:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.app-nav-tab--active {
+  background-color: var(--color-accent-soft);
+  color: var(--color-ink);
+  border-color: var(--color-accent);
+}
+
+.admin-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-panel {
+  background-color: var(--light);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.admin-panel-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: var(--tracking-display);
+  color: var(--color-ink);
+}
+
+.admin-panel-desc {
+  margin: 0;
+  color: var(--color-ink-2);
+  font-size: 0.9375rem;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding: 0.6rem 0.85rem;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-input);
+}
+
+.admin-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.5rem;
+}
+
+.admin-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-input);
+  background-color: var(--color-paper);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
 .dash-shell--with-console {
   padding-bottom: 6rem;
 }

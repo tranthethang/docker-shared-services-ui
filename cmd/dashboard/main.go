@@ -16,6 +16,7 @@ import (
 	"github.com/tranthethang/docker-shared-services-ui/internal/catalog"
 	"github.com/tranthethang/docker-shared-services-ui/internal/config"
 	"github.com/tranthethang/docker-shared-services-ui/internal/docker"
+	"github.com/tranthethang/docker-shared-services-ui/internal/ops"
 	"github.com/tranthethang/docker-shared-services-ui/internal/server"
 	"github.com/tranthethang/docker-shared-services-ui/internal/stack"
 	"github.com/tranthethang/docker-shared-services-ui/web"
@@ -61,20 +62,41 @@ func run() error {
 		_ = dockerClient.Close()
 	}()
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	runner := ops.NewRunner(ops.Config{
+		RepoPath:       cfg.RepoPath,
+		Identity:       identity,
+		ActiveServices: loadedCatalog.ActiveNames,
+		Docker:         dockerClient,
+	})
+
 	roHandler := &api.ReadOnlyHandler{
 		Catalog:  loadedCatalog,
 		Identity: identity,
 		Docker:   dockerClient,
 	}
+	opsHandler := &api.OpsHandler{
+		Runner: runner,
+		AppCtx: ctx,
+	}
+	adminHandler := &api.AdminHandler{
+		RepoPath: cfg.RepoPath,
+		Catalog:  loadedCatalog,
+		Identity: identity,
+		Docker:   dockerClient,
+		Runner:   runner,
+		AppCtx:   ctx,
+	}
 
 	srv := server.New(server.Config{
-		Addr:        cfg.Addr,
-		StaticFS:    web.DistFS(),
-		RegisterAPI: roHandler.Register,
+		Addr:          cfg.Addr,
+		StaticFS:      web.DistFS(),
+		RegisterAPI:   roHandler.Register,
+		RegisterOps:   opsHandler.Register,
+		RegisterAdmin: adminHandler.Register,
 	})
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	errCh := make(chan error, 1)
 	go func() {
