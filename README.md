@@ -102,7 +102,7 @@ Optional `.env` variables:
 
 - `DSS_REPO_PATH` *(required)*: Absolute host path to `docker-shared-services` (mounted at the identical path inside the container).
 - `DOMAIN` *(default: `sandbox.localhost`)*: Base domain for the Traefik router rule (`console.${DOMAIN}`).
-- `SANDBOX_NAME` *(default: `sandbox`)*: Prefix for the container name (`${SANDBOX_NAME}-console`) and external `traefik_proxy` network (`${SANDBOX_NAME}_traefik_proxy`).
+- `SANDBOX_NAME` *(optional, empty by default)*: Prefix for the container name (`${SANDBOX_NAME}-console`) and external `traefik_proxy` network (`${SANDBOX_NAME}_traefik_proxy`); leave empty when `docker-shared-services` uses `traefik_proxy`.
 - `AUTH_MIDDLEWARE` *(optional)*: Traefik middleware name (for example `basic-auth@file` or `forward-auth@file`).
 - `RESTART_POLICY` *(default: `unless-stopped`)*: Container restart policy.
 - `CONSOLE_CPUS_LIMIT` *(default: `0.50`)* and `CONSOLE_MEMORY_LIMIT` *(default: `128M`)*: Container resource limits.
