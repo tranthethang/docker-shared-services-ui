@@ -1,6 +1,9 @@
-.PHONY: build-web build dev format format-check lint test check hooks install-service uninstall-service
+.PHONY: build-web build build-linux dev format format-check lint test check hooks install-service uninstall-service docker-build docker-up docker-down
 
 BINARY := bin/dashboard
+LINUX_BINARY := bin/dashboard-linux
+HOST_ARCH := $(shell uname -m)
+TARGETARCH ?= $(if $(GOARCH),$(GOARCH),$(if $(filter arm64 aarch64,$(HOST_ARCH)),arm64,amd64))
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -12,6 +15,10 @@ build-web:
 build: build-web
 	@mkdir -p bin
 	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/dashboard
+
+build-linux: build-web
+	@mkdir -p bin
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(TARGETARCH) go build -trimpath -ldflags "-s -w $(LDFLAGS)" -o $(LINUX_BINARY) ./cmd/dashboard
 
 dev:
 	@echo "Starting Go API server and Vite dev server..."
@@ -57,3 +64,12 @@ install-service: build
 
 uninstall-service:
 	./scripts/launchd/uninstall.sh
+
+docker-build: build-linux
+	docker compose build
+
+docker-up: docker-build
+	docker compose up -d
+
+docker-down:
+	docker compose down

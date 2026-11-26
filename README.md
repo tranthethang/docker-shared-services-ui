@@ -78,6 +78,35 @@ make uninstall-service
 ./scripts/launchd/uninstall.sh --remove-bin
 ```
 
+## Docker Compose (`console.sandbox.localhost`)
+
+Run the dashboard as a Docker Compose service behind Traefik and Caddy:
+
+1. Create `.env` from `.env.example` and set `DSS_REPO_PATH` to your local `docker-shared-services` checkout:
+
+```sh
+cp .env.example .env
+```
+
+2. Ensure `docker-shared-services` (`traefik` on the external `traefik_proxy` network) and `docker-shared-services-proxy` (`caddy`) are running.
+
+3. Cross-compile the Linux binary, build the image, and start the container:
+
+```sh
+make docker-up
+```
+
+4. Open `https://console.sandbox.localhost` (or `https://console.${DOMAIN}` if `DOMAIN` is customized in `.env`).
+
+Optional `.env` variables:
+
+- `DSS_REPO_PATH` *(required)*: Absolute host path to `docker-shared-services` (mounted at the identical path inside the container).
+- `DOMAIN` *(default: `sandbox.localhost`)*: Base domain for the Traefik router rule (`console.${DOMAIN}`).
+- `SANDBOX_NAME` *(default: `sandbox`)*: Prefix for the container name (`${SANDBOX_NAME}-console`) and external `traefik_proxy` network (`${SANDBOX_NAME}_traefik_proxy`).
+- `AUTH_MIDDLEWARE` *(optional)*: Traefik middleware name (for example `basic-auth@file` or `forward-auth@file`).
+- `RESTART_POLICY` *(default: `unless-stopped`)*: Container restart policy.
+- `CONSOLE_CPUS_LIMIT` *(default: `0.50`)* and `CONSOLE_MEMORY_LIMIT` *(default: `128M`)*: Container resource limits.
+
 ## Keyboard Shortcuts
 
 | Key | Action |
@@ -94,6 +123,10 @@ Shortcuts are ignored while typing inside `<input>`, `<textarea>`, `<select>`, o
 
 - `make build-web`: Build frontend assets into `web/dist`.
 - `make build`: Build frontend assets and compile `./bin/dashboard` with `-ldflags` version metadata.
+- `make build-linux`: Build frontend assets and cross-compile a static Linux ELF binary (`./bin/dashboard-linux`).
+- `make docker-build`: Build `./bin/dashboard-linux` and build the Docker image via `docker compose build`.
+- `make docker-up`: Build the image and start the `console` service in detached mode (`docker compose up -d`).
+- `make docker-down`: Stop and remove the `console` service (`docker compose down`).
 - `make dev`: Run Go server (`--no-open`) and Vite dev server concurrently.
 - `make format`: Format Go files with `gofmt`.
 - `make format-check`: Verify Go formatting with `gofmt -l`.
