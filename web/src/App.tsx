@@ -21,6 +21,7 @@ import { PackageWizard } from "./components/PackageWizard.tsx";
 import { PresetsModal } from "./components/PresetsModal.tsx";
 import { ServiceDrawer } from "./components/ServiceDrawer.tsx";
 import { ServiceGroup } from "./components/ServiceGroup.tsx";
+import { ShortcutsModal } from "./components/ShortcutsModal.tsx";
 import { TelemetryBar } from "./components/TelemetryBar.tsx";
 import {
   filterServices,
@@ -28,6 +29,8 @@ import {
   useDashboardData,
 } from "./hooks/useDashboardData.ts";
 import { useOpsStream } from "./hooks/useOpsStream.ts";
+import { useShortcuts } from "./hooks/useShortcuts.ts";
+import { useTheme } from "./hooks/useTheme.ts";
 import { t } from "./i18n/messages.ts";
 
 type AppTab = "services" | "env" | "exporter" | "maintenance";
@@ -76,7 +79,9 @@ export function App() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [presetsLoading, setPresetsLoading] = useState(false);
   const [presetsError, setPresetsError] = useState<string | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [opsError, setOpsError] = useState<string | null>(null);
+  const { theme, cycleTheme } = useTheme();
 
   const loadEnvStatus = useCallback(async () => {
     setEnvLoading(true);
@@ -226,6 +231,33 @@ export function App() {
     setPresetsOpen(false);
   }, []);
 
+  const handleFocusSearch = useCallback(() => {
+    setActiveTab("services");
+    window.requestAnimationFrame(() => {
+      document.getElementById("service-search-input")?.focus();
+    });
+  }, []);
+
+  const handleEscape = useCallback(() => {
+    if (shortcutsOpen) {
+      setShortcutsOpen(false);
+    } else if (confirmApplyOpen) {
+      setConfirmApplyOpen(false);
+    } else if (presetsOpen) {
+      setPresetsOpen(false);
+    } else if (selectedServiceName !== null) {
+      setSelectedServiceName(null);
+    }
+  }, [confirmApplyOpen, presetsOpen, selectedServiceName, shortcutsOpen]);
+
+  useShortcuts({
+    onFocusSearch: handleFocusSearch,
+    onRefresh: () => void refresh(),
+    onOpenPresets: () => void handleOpenPresets(),
+    onToggleHelp: () => setShortcutsOpen((prev) => !prev),
+    onEscape: handleEscape,
+  });
+
   return (
     <div className="dash-page">
       <main className="dash-shell dash-shell--with-console">
@@ -235,6 +267,9 @@ export function App() {
           totalServices={services.length}
           connectionStatus={connectionStatus}
           refreshing={refreshing}
+          theme={theme}
+          onCycleTheme={cycleTheme}
+          onOpenShortcuts={() => setShortcutsOpen(true)}
           onRefresh={() => void refresh()}
         />
 
@@ -413,11 +448,17 @@ export function App() {
       <PresetsModal
         open={presetsOpen}
         presets={presets}
+        selectedServices={Array.from(checkedServices)}
         loading={presetsLoading}
         error={presetsError}
         opsBusy={ops.busy}
         onSelectPreset={handleSelectPreset}
         onClose={() => setPresetsOpen(false)}
+      />
+
+      <ShortcutsModal
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
       />
 
       <ConfirmApplyModal

@@ -1,13 +1,17 @@
-.PHONY: build-web build dev format format-check lint test check hooks
+.PHONY: build-web build dev format format-check lint test check hooks install-service uninstall-service
 
 BINARY := bin/dashboard
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS := -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(BUILD_DATE)
 
 build-web:
 	pnpm --dir web build
 
 build: build-web
 	@mkdir -p bin
-	go build -o $(BINARY) ./cmd/dashboard
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/dashboard
 
 dev:
 	@echo "Starting Go API server and Vite dev server..."
@@ -47,3 +51,9 @@ hooks:
 		echo "Neither prek nor pre-commit is installed."; \
 		exit 1; \
 	fi
+
+install-service: build
+	./scripts/launchd/install.sh
+
+uninstall-service:
+	./scripts/launchd/uninstall.sh

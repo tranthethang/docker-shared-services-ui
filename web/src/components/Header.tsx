@@ -1,5 +1,6 @@
 import type { InfoResponse } from "../api/types.ts";
 import type { ConnectionStatus } from "../hooks/useDashboardData.ts";
+import type { ThemePreference } from "../hooks/useTheme.ts";
 import { t } from "../i18n/messages.ts";
 
 export interface HeaderProps {
@@ -8,6 +9,9 @@ export interface HeaderProps {
   totalServices: number;
   connectionStatus: ConnectionStatus;
   refreshing: boolean;
+  theme: ThemePreference;
+  onCycleTheme: () => void;
+  onOpenShortcuts: () => void;
   onRefresh: () => void;
 }
 
@@ -17,8 +21,17 @@ export function Header({
   totalServices,
   connectionStatus,
   refreshing,
+  theme,
+  onCycleTheme,
+  onOpenShortcuts,
   onRefresh,
 }: HeaderProps) {
+  const themeModeLabel =
+    theme === "dark"
+      ? t("themeDark")
+      : theme === "light"
+        ? t("themeLight")
+        : t("themeSystem");
   const connectionLabel =
     connectionStatus === "connected"
       ? t("connectionConnected")
@@ -63,6 +76,25 @@ export function Header({
             <span className="conn-dot" aria-hidden="true" />
             <span>{connectionLabel}</span>
           </span>
+
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={onCycleTheme}
+            title={t("themeToggleLabel", { mode: themeModeLabel })}
+          >
+            {t("themeToggleLabel", { mode: themeModeLabel })}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={onOpenShortcuts}
+            aria-label={t("shortcutsOpenLabel")}
+            title={t("shortcutsOpenLabel")}
+          >
+            ?
+          </button>
 
           <button
             type="button"

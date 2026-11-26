@@ -30,6 +30,24 @@
   --tracking-display: -0.03em;
 }
 
+html.dark {
+  --color-paper: oklch(13% 0.01 170);
+  --color-paper-2: oklch(17% 0.015 170);
+  --color-paper-3: oklch(21% 0.02 165);
+  --color-ink: oklch(96% 0.01 160);
+  --color-ink-2: oklch(84% 0.015 160);
+  --color-muted: oklch(68% 0.02 165);
+  --color-rule: oklch(27% 0.02 165);
+  --color-accent: oklch(64% 0.13 160);
+  --color-accent-deep: oklch(54% 0.12 162);
+  --color-accent-soft: oklch(26% 0.05 160);
+  --color-accent-ink: oklch(13% 0.01 170);
+  --color-focus: oklch(72% 0.14 160);
+  --light: oklch(18% 0.015 170);
+  --glint: oklch(100% 0 0 / 0.12);
+  --backdrop-scrim: oklch(5% 0.01 170 / 0.6);
+}
+
 html,
 body {
   margin: 0;
@@ -1253,6 +1271,136 @@ body {
 .preset-card-actions {
   margin-top: auto;
   padding-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.preset-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.preset-section:last-child {
+  margin-bottom: 0;
+}
+
+.preset-section-heading {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.preset-card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.preset-custom-badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent-soft);
+  color: var(--color-ink);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.preset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  background-color: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-card);
+}
+
+.preset-form-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.preset-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.preset-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.preset-form-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+  cursor: pointer;
+}
+
+.preset-form-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+.preset-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.shortcuts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.85rem;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-input);
+}
+
+.shortcut-desc {
+  font-size: 0.9375rem;
+  color: var(--color-ink);
+}
+
+.shortcut-key {
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background-color: var(--color-paper-2);
+  border: 1px solid var(--color-rule);
+  color: var(--color-ink);
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .ops-console {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,6 +25,12 @@ import (
 
 const shutdownTimeout = 5 * time.Second
 
+var (
+	version   = "dev"
+	commit    = "none"
+	buildDate = "unknown"
+)
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -35,9 +42,13 @@ func run() error {
 	addrFlag := flag.String("addr", config.DefaultAddr, "HTTP listen address")
 	repoFlag := flag.String("repo", "", "Path to docker-shared-services repository")
 	noOpen := flag.Bool("no-open", false, "Do not open browser on startup")
+	versionFlag := flag.Bool("version", false, "Print version information and exit")
 	flag.Parse()
 
-	_ = noOpen
+	if *versionFlag {
+		fmt.Printf("dashboard %s (commit %s, built %s)\n", version, commit, buildDate)
+		return nil
+	}
 
 	cfg, err := config.Resolve(*repoFlag, *addrFlag)
 	if err != nil {
@@ -98,14 +109,28 @@ func run() error {
 		RegisterAdmin: adminHandler.Register,
 	})
 
+	ln, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		return fmt.Errorf("listen %s: %w", cfg.Addr, err)
+	}
+
+	url := config.BrowserURL(ln.Addr().String())
 	errCh := make(chan error, 1)
 	go func() {
-		fmt.Printf("dashboard listening on http://%s\n", cfg.Addr)
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errCh <- err
+		fmt.Printf("dashboard listening on %s\n", url)
+		if serveErr := srv.Serve(ln); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			errCh <- serveErr
 		}
 		close(errCh)
 	}()
+
+	if !*noOpen {
+		go func() {
+			if openErr := config.OpenBrowser(ctx, url); openErr != nil {
+				fmt.Fprintf(os.Stderr, "warning: open browser: %v\n", openErr)
+			}
+		}()
+	}
 
 	select {
 	case err := <-errCh:
