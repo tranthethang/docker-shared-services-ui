@@ -18,23 +18,32 @@ const (
 
 // Config holds configuration for the dashboard HTTP server.
 type Config struct {
-	Addr     string
-	StaticFS fs.FS
+	Addr        string
+	StaticFS    fs.FS
+	RegisterAPI func(mux *http.ServeMux)
 }
 
 // New creates an *http.Server configured with the dashboard routes and timeouts.
 func New(cfg Config) *http.Server {
 	return &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           NewHandler(cfg.StaticFS),
+		Handler:           NewHandlerWithAPI(cfg.StaticFS, cfg.RegisterAPI),
 		ReadHeaderTimeout: defaultReadHeaderTimeout,
 	}
 }
 
 // NewHandler constructs the HTTP handler with /api/health and SPA fallback routes.
 func NewHandler(staticFS fs.FS) http.Handler {
+	return NewHandlerWithAPI(staticFS, nil)
+}
+
+// NewHandlerWithAPI constructs the HTTP handler with /api/health, optional API routes, and SPA fallback.
+func NewHandlerWithAPI(staticFS fs.FS, registerAPI func(mux *http.ServeMux)) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handleHealth)
+	if registerAPI != nil {
+		registerAPI(mux)
+	}
 	mux.HandleFunc("GET /", spaHandler(staticFS))
 	return mux
 }

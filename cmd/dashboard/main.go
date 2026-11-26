@@ -12,14 +12,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tranthethang/docker-shared-services-ui/internal/api"
+	"github.com/tranthethang/docker-shared-services-ui/internal/catalog"
+	"github.com/tranthethang/docker-shared-services-ui/internal/config"
+	"github.com/tranthethang/docker-shared-services-ui/internal/docker"
 	"github.com/tranthethang/docker-shared-services-ui/internal/server"
+	"github.com/tranthethang/docker-shared-services-ui/internal/stack"
 	"github.com/tranthethang/docker-shared-services-ui/web"
 )
 
-const (
-	defaultAddr     = "127.0.0.1:8787"
-	shutdownTimeout = 5 * time.Second
-)
+const shutdownTimeout = 5 * time.Second
 
 func main() {
 	if err := run(); err != nil {
@@ -29,17 +31,46 @@ func main() {
 }
 
 func run() error {
-	addr := flag.String("addr", defaultAddr, "HTTP listen address")
-	repo := flag.String("repo", "", "Path to docker-shared-services repository")
+	addrFlag := flag.String("addr", config.DefaultAddr, "HTTP listen address")
+	repoFlag := flag.String("repo", "", "Path to docker-shared-services repository")
 	noOpen := flag.Bool("no-open", false, "Do not open browser on startup")
 	flag.Parse()
 
-	_ = repo
 	_ = noOpen
 
+	cfg, err := config.Resolve(*repoFlag, *addrFlag)
+	if err != nil {
+		return err
+	}
+
+	identity, err := stack.ParseIdentity(cfg.RepoPath)
+	if err != nil {
+		return err
+	}
+
+	loadedCatalog, err := catalog.Load(cfg.RepoPath)
+	if err != nil {
+		return err
+	}
+
+	dockerClient, err := docker.NewClient()
+	if err != nil {
+		return fmt.Errorf("create docker client: %w", err)
+	}
+	defer func() {
+		_ = dockerClient.Close()
+	}()
+
+	roHandler := &api.ReadOnlyHandler{
+		Catalog:  loadedCatalog,
+		Identity: identity,
+		Docker:   dockerClient,
+	}
+
 	srv := server.New(server.Config{
-		Addr:     *addr,
-		StaticFS: web.DistFS(),
+		Addr:        cfg.Addr,
+		StaticFS:    web.DistFS(),
+		RegisterAPI: roHandler.Register,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -47,7 +78,7 @@ func run() error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		fmt.Printf("dashboard listening on http://%s\n", *addr)
+		fmt.Printf("dashboard listening on http://%s\n", cfg.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- err
 		}
