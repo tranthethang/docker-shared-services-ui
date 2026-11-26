@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: format-check
+        name: Go format check
+        entry: make format-check
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: lint
+        name: Go lint
+        entry: make lint
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: test
+        name: Go test
+        entry: make test
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

@@ -1,0 +1,42 @@
+services:
+  console:
+    build: .
+    image: docker-shared-services-ui:local
+    container_name: ${SANDBOX_NAME:+${SANDBOX_NAME}-}console
+    restart: "${RESTART_POLICY:-unless-stopped}"
+    environment:
+      - DSS_REPO_PATH=${DSS_REPO_PATH}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DSS_REPO_PATH:?Set DSS_REPO_PATH in .env}:${DSS_REPO_PATH}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "sandbox.stack=${SANDBOX_NAME:-sandbox}"
+      - "traefik.docker.network=${SANDBOX_NAME:+${SANDBOX_NAME}_}traefik_proxy"
+      - "traefik.http.routers.console.rule=Host(`console.${DOMAIN:-sandbox.localhost}`)"
+      - "traefik.http.routers.console.entrypoints=web"
+      - "traefik.http.services.console.loadbalancer.server.port=8787"
+      - "traefik.http.routers.console.middlewares=${AUTH_MIDDLEWARE:-}"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8787/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "${CONSOLE_CPUS_LIMIT:-0.50}"
+          memory: ${CONSOLE_MEMORY_LIMIT:-128M}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  traefik_proxy:
+    external: true
+    name: ${SANDBOX_NAME:+${SANDBOX_NAME}_}traefik_proxy
