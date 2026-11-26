@@ -61,7 +61,7 @@ export function ServiceGroup({
       </button>
 
       {!collapsed && (
-        <div className="service-grid">
+        <div className="service-list" role="list">
           {services.map((svc) => (
             <ServiceCard
               key={svc.name}

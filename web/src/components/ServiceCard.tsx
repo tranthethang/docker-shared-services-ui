@@ -64,53 +64,69 @@ export function ServiceCard({
   const { cpuPct, memBytes, hasStats } = getServiceResources(service, telemetry);
   const showHealth = service.health !== "-" && service.health !== "none";
   const lockReason = service.lockedReason || t("serviceLockedFallback");
+  const isActive = service.state === "running" || service.state === "partial";
+
+  const rowClasses = [
+    "service-row",
+    isActive ? "service-row--active" : "service-row--inactive",
+    service.state === "partial" ? "service-row--partial" : "",
+    selected ? "service-row--selected" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <article
-      className={selected ? "service-card service-card--selected" : "service-card"}
-    >
-      <div className="service-card-top">
-        <div className="service-card-title-wrap">
-          {onToggleChecked && (
-            <input
-              type="checkbox"
-              className="service-batch-checkbox"
-              checked={checked}
-              disabled={opsBusy}
-              aria-label={t("selectServiceLabel", { name: service.name })}
-              onChange={() => onToggleChecked(service.name)}
-            />
-          )}
-          <button
-            type="button"
-            className="service-card-trigger"
-            onClick={() => onSelect(service.name)}
-            aria-label={t("inspectService", { name: service.name })}
-          >
-            <span className="service-card-name">{service.name}</span>
-          </button>
-        </div>
+    <article className={rowClasses} role="listitem" data-state={service.state}>
+      <div className="service-row-main">
+        {onToggleChecked && (
+          <input
+            type="checkbox"
+            className="service-batch-checkbox"
+            checked={checked}
+            disabled={opsBusy}
+            aria-label={t("selectServiceLabel", { name: service.name })}
+            onChange={() => onToggleChecked(service.name)}
+          />
+        )}
 
-        <div className="service-badges">
-          {service.locked && (
-            <span className="locked-pill" title={lockReason}>
-              {t("serviceLockedBadge")}
-            </span>
-          )}
-          <span className={`status-pill status-pill--${service.state}`}>
-            {t(stateKey)}
-          </span>
-          {showHealth && (
-            <span className={`health-pill health-pill--${service.health}`}>
-              {t(healthKey)}
-            </span>
-          )}
+        <span
+          className={`service-state-dot service-state-dot--${service.state}`}
+          aria-hidden="true"
+        />
+
+        <div className="service-row-identity">
+          <div className="service-row-title-line">
+            <button
+              type="button"
+              className="service-row-trigger"
+              onClick={() => onSelect(service.name)}
+              aria-label={t("inspectService", { name: service.name })}
+            >
+              <span className="service-row-name">{service.name}</span>
+            </button>
+
+            <div className="service-badges">
+              {service.locked && (
+                <span className="locked-pill" title={lockReason}>
+                  {t("serviceLockedBadge")}
+                </span>
+              )}
+              <span className={`status-pill status-pill--${service.state}`}>
+                {t(stateKey)}
+              </span>
+              {showHealth && (
+                <span className={`health-pill health-pill--${service.health}`}>
+                  {t(healthKey)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <p className="service-row-desc">{service.description}</p>
         </div>
       </div>
 
-      <p className="service-card-desc">{service.description}</p>
-
-      <div className="service-card-foot">
+      <div className="service-row-aside">
         <div className="service-metrics mono-value">
           <span>
             {t("containersCount", {
@@ -126,31 +142,33 @@ export function ServiceCard({
           )}
         </div>
 
-        {service.webUi.length > 0 && (
-          <div className="service-links">
-            {service.webUi.map((url) => (
-              <a
-                key={url}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="service-webui-link"
-              >
-                {t("openWebUi")}
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
+        <div className="service-row-controls">
+          {service.webUi.length > 0 && (
+            <div className="service-links">
+              {service.webUi.map((url) => (
+                <a
+                  key={url}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="service-webui-link"
+                >
+                  {t("openWebUi")}
+                </a>
+              ))}
+            </div>
+          )}
 
-      {onAction && (
-        <ServiceActions
-          service={service}
-          opsBusy={opsBusy}
-          onAction={onAction}
-          compact
-        />
-      )}
+          {onAction && (
+            <ServiceActions
+              service={service}
+              opsBusy={opsBusy}
+              onAction={onAction}
+              compact
+            />
+          )}
+        </div>
+      </div>
     </article>
   );
 }

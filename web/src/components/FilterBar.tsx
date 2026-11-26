@@ -8,6 +8,8 @@ export interface FilterBarProps {
   categories: readonly string[];
   activeOnly: boolean;
   onActiveOnlyChange: (value: boolean) => void;
+  activeCount?: number;
+  totalCount?: number;
   onClear: () => void;
   hasActiveFilters: boolean;
 }
@@ -20,9 +22,13 @@ export function FilterBar({
   categories,
   activeOnly,
   onActiveOnlyChange,
+  activeCount,
+  totalCount,
   onClear,
   hasActiveFilters,
 }: FilterBarProps) {
+  const showCounts = activeCount !== undefined && totalCount !== undefined;
+
   return (
     <section className="filter-bar" aria-label={t("searchLabel")}>
       <div className="filter-field filter-field--search">
@@ -61,11 +67,22 @@ export function FilterBar({
       <div className="filter-actions">
         <button
           type="button"
-          className={activeOnly ? "filter-toggle filter-toggle--active" : "filter-toggle"}
-          aria-pressed={activeOnly}
+          role="switch"
+          aria-checked={activeOnly}
+          className={
+            activeOnly ? "active-switch active-switch--on" : "active-switch"
+          }
           onClick={() => onActiveOnlyChange(!activeOnly)}
         >
-          {t("activeOnlyLabel")}
+          <span className="active-switch-track" aria-hidden="true">
+            <span className="active-switch-thumb" />
+          </span>
+          <span className="active-switch-label">{t("activeOnlyLabel")}</span>
+          {showCounts && (
+            <span className="active-switch-count mono-value">
+              {activeCount}/{totalCount}
+            </span>
+          )}
         </button>
 
         {hasActiveFilters && (

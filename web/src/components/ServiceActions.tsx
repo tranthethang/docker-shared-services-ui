@@ -45,11 +45,14 @@ export function ServiceActions({
           title = lockReason;
         }
 
+        const isCompactUp = compact && action === "up" && (isAbsent || service.state === "stopped");
+        const buttonVariant = isCompactUp ? "outline-accent" : variant;
+
         return (
           <button
             key={action}
             type="button"
-            className={`btn btn--${variant} btn--sm`}
+            className={`btn btn--${buttonVariant} btn--sm`}
             disabled={disabled}
             title={title}
             onClick={(event) => {

@@ -375,6 +375,8 @@ export function App() {
               categories={categories}
               activeOnly={activeOnly}
               onActiveOnlyChange={setActiveOnly}
+              activeCount={runningServices}
+              totalCount={services.length}
               onClear={handleClearFilters}
               hasActiveFilters={hasActiveFilters}
             />
